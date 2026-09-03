@@ -1,0 +1,4 @@
+marker-env/
+salida/
+__pycache__/
+*.pyc
