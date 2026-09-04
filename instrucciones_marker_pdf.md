@@ -116,3 +116,17 @@ Para PDFs escaneados (sin capa de texto) en equipos sin GPU, el paso de OCR (`Re
 - **Bajar `RECOGNITION_BATCH_SIZE` / `DETECTOR_BATCH_SIZE` no ayuda si el problema es RAM total insuficiente** — puede incluso empeorar el tiempo por iteración al perder eficiencia de batching, sin reducir el swap. Solo tiene sentido si hay RAM de sobra pero VRAM/CPU cache limitada.
 - Para un libro de ~90 páginas escaneadas sin GPU, contar con **varias horas** de procesamiento si la RAM disponible es ajustada (<8GB libres). Con RAM de sobra el ritmo debería ser de varios segundos por bloque de texto, no aumentando con el tiempo.
 - El entorno virtual (`marker-env/`) y la caché de modelos (`%LOCALAPPDATA%\datalab\datalab\Cache\models`) **no son portables entre equipos** (rutas absolutas, binarios específicos de la instalación). Para usar Marker en otra máquina, repetir la instalación desde cero (Pasos 1-3) en vez de copiar estas carpetas.
+
+## Si la descarga de modelos falla con error SSL (redes universitarias/corporativas)
+
+Si al correr `marker_single` aparece un error como:
+
+```
+ssl.SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol
+```
+
+al intentar bajar `manifest.json` desde `models.datalab.to` (o `download.pytorch.org`), es porque la red (típico en redes de campus/corporativas con inspección SSL) pide una renegociación TLS a mitad de la conexión que el OpenSSL empaquetado con Python rechaza por seguridad, aunque el navegador y `curl.exe` sí la manejan bien (usan el motor TLS nativo de Windows, schannel).
+
+**Diagnóstico rápido:** si `curl.exe -v https://models.datalab.to/layout/2025_09_23/manifest.json` funciona pero el error de Python persiste, es exactamente este problema.
+
+**Solución:** correr `descargar_modelos.bat` (o `descargar_modelos.ps1`) antes de `marker_single`. Este script baja todos los modelos necesarios usando `curl.exe` (que sí funciona en estas redes) y los deja en la carpeta de caché exacta que Marker espera (`%LOCALAPPDATA%\datalab\datalab\Cache\models\...`). Una vez ahí, `marker_single` los detecta como ya descargados y no vuelve a intentar la descarga por red. El script reintenta automáticamente archivos grandes que se corten a mitad de descarga.
