@@ -1,4 +1,5 @@
 marker-env/
 salida/
+wheels/
 __pycache__/
 *.pyc
