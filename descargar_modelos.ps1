@@ -58,6 +58,23 @@ foreach ($modelo in $modelos) {
     Write-Host ""
 }
 
+Write-Host "--- fuente GoNotoCurrent-Regular.ttf ---"
+# Marker descarga esta fuente aparte (no pasa por surya/common/s3.py), asi
+# que tambien queda expuesta al mismo problema de renegociacion TLS.
+$fontDir = Join-Path $PSScriptRoot "marker-env\Lib\site-packages\static\fonts"
+$fontPath = Join-Path $fontDir "GoNotoCurrent-Regular.ttf"
+New-Item -ItemType Directory -Force -Path $fontDir | Out-Null
+if ((Test-Path $fontPath) -and ((Get-Item $fontPath).Length -gt 0)) {
+    Write-Host "  ya existe"
+} else {
+    $fontUrl = "$baseUrl/artifacts/GoNotoCurrent-Regular.ttf"
+    curl.exe -sS -f -L -C - --retry 8 --retry-delay 5 --retry-all-errors -o $fontPath $fontUrl
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  ERROR descargando la fuente (curl exit $LASTEXITCODE) - se reintentara si vuelves a correr el script"
+    }
+}
+Write-Host ""
+
 Write-Host "============================================"
 Write-Host "  Listo. Ahora puedes correr marker_single"
 Write-Host "  normalmente (no deberia intentar bajar nada"
